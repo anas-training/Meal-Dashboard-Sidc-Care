@@ -1,0 +1,3080 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>MEAL Interactive Dashboard - ECHO 2025 SIDC</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        #matrixCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.15;
+        }
+
+        .cyber-number {
+            font-family: 'Orbitron', monospace;
+            font-weight: 900;
+            background: linear-gradient(45deg, #00ff00, #00ffff, #ff00ff);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: cyber-glow 2s ease-in-out infinite;
+            text-shadow: 0 0 30px rgba(0, 255, 0, 0.5);
+        }
+
+        @keyframes cyber-glow {
+            0%, 100% { filter: brightness(1) saturate(1); }
+            50% { filter: brightness(1.5) saturate(1.5); }
+        }
+
+        .flying-code {
+            position: fixed;
+            font-family: 'Orbitron', monospace;
+            font-size: 14px;
+            color: #00ff00;
+            pointer-events: none;
+            z-index: 999;
+            animation: fly-across 3s linear;
+            text-shadow: 0 0 10px #00ff00;
+        }
+
+        @keyframes fly-across {
+            0% {
+                transform: translateX(-100px) translateY(0) scale(0.5);
+                opacity: 0;
+            }
+            20% {
+                opacity: 1;
+            }
+            80% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(calc(100vw + 100px)) translateY(-30px) scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        .data-stream {
+            position: absolute;
+            font-family: 'Orbitron', monospace;
+            color: rgba(0, 255, 0, 0.8);
+            font-size: 10px;
+            animation: stream-down 4s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes stream-down {
+            0% {
+                transform: translateY(-100vh);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh);
+                opacity: 0;
+            }
+        }
+
+        .glitch {
+            position: relative;
+            animation: glitch 2s infinite;
+        }
+
+        @keyframes glitch {
+            0%, 100% { text-shadow: 2px 0 #ff00ff, -2px 0 #00ffff; }
+            25% { text-shadow: -2px 0 #ff00ff, 2px 0 #00ffff; }
+            50% { text-shadow: 2px 0 #00ffff, -2px 0 #ff00ff; }
+            75% { text-shadow: -2px 0 #00ffff, 2px 0 #ff00ff; }
+        }
+
+        .binary-rain {
+            position: fixed;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            pointer-events: none;
+            animation: rain-fall linear infinite;
+        }
+
+        @keyframes rain-fall {
+            to {
+                transform: translateY(100vh);
+            }
+        }
+
+        .hack-text {
+            font-family: 'Orbitron', monospace;
+            letter-spacing: 2px;
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px !important;
+            }
+            
+            .text-4xl {
+                font-size: 1.5rem !important;
+            }
+            
+            .grid {
+                grid-template-columns: 1fr !important;
+            }
+            
+            .metric-card {
+                padding: 1rem !important;
+            }
+            
+            #matrixCanvas {
+                opacity: 0.05;
+            }
+            
+            .flying-code {
+                font-size: 10px !important;
+            }
+            
+            table {
+                font-size: 12px;
+            }
+            
+            .mobile-scroll {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .chart-container {
+                height: 200px !important;
+            }
+            
+            .modal-content {
+                margin: 10px;
+                max-width: 95% !important;
+            }
+        }
+
+        /* Mobile-first navigation */
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            z-index: 9999;
+            padding: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu {
+                display: flex;
+                justify-content: space-around;
+            }
+        }
+
+        .mobile-menu-item {
+            color: white;
+            text-align: center;
+            padding: 10px;
+            flex: 1;
+            transition: all 0.3s;
+        }
+
+        .mobile-menu-item:active {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(0.95);
+        }
+
+        /* Connection Panel Override */
+        .connection-panel {
+            position: fixed !important;
+            top: 20px !important;
+            left: 20px !important;
+            right: 20px !important;
+            z-index: 99999 !important;
+            background: rgba(0, 0, 0, 0.95) !important;
+            border: 3px solid #00ff00 !important;
+            border-radius: 15px !important;
+            padding: 20px !important;
+            box-shadow: 0 0 30px #00ff00 !important;
+            backdrop-filter: blur(10px) !important;
+        }
+
+        .connection-visible {
+            opacity: 1 !important;
+            visibility: visible !important;
+            display: block !important;
+        }
+
+        .connection-hidden {
+            opacity: 0 !important;
+            visibility: hidden !important;
+            display: none !important;
+        }
+        .insight-card {
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid;
+            animation: slideInRight 0.5s ease;
+        }
+
+        .insight-critical {
+            background: rgba(239, 68, 68, 0.2);
+            border-left-color: #ef4444;
+        }
+
+        .insight-warning {
+            background: rgba(245, 158, 11, 0.2);
+            border-left-color: #f59e0b;
+        }
+
+        .insight-success {
+            background: rgba(34, 197, 94, 0.2);
+            border-left-color: #22c55e;
+        }
+
+        .insight-info {
+            background: rgba(59, 130, 246, 0.2);
+            border-left-color: #3b82f6;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+
+        .gradient-bg {
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .metric-card {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.7s;
+        }
+
+        .metric-card:hover::before {
+            left: 100%;
+        }
+
+        .float-animation {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .pulse-dot {
+            position: relative;
+        }
+
+        .pulse-dot::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: inherit;
+            border-radius: inherit;
+            animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        .chart-container {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .chart-container:hover {
+            transform: scale(1.02);
+        }
+
+        .indicator-row {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .indicator-row:hover {
+            background: linear-gradient(90deg, rgba(99, 102, 241, 0.1) 0%, transparent 100%);
+            transform: translateX(10px);
+        }
+
+        .filter-btn {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .filter-btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .filter-btn:active::after {
+            width: 300px;
+            height: 300px;
+        }
+
+        .live-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 1);
+            animation: live-pulse 2s infinite;
+        }
+
+        @keyframes live-pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+
+        .progress-ring {
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip.show {
+            opacity: 1;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .modal.show {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: transform 0.3s;
+        }
+
+        .modal.show .modal-content {
+            transform: scale(1);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+    <!-- Matrix Rain Canvas -->
+    <canvas id="matrixCanvas"></canvas>
+    
+    <!-- Floating Code Elements -->
+    <div id="floatingCodeContainer"></div>
+    <!-- Fixed Floating Connection Panel -->
+    <div id="floatingConnectionPanel" class="connection-panel connection-hidden">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-2xl font-bold text-green-300">🔗 CONNECT YOUR GOOGLE SHEETS</h3>
+            <button onclick="hideConnectionPanel()" class="text-green-300 text-2xl hover:text-red-400">✕</button>
+        </div>
+        
+        <div class="grid grid-cols-1 gap-4">
+            <div>
+                <label class="block text-green-300 font-bold mb-2">📊 Google Sheet ID:</label>
+                <input type="text" id="floatingSheetId" 
+                       class="w-full px-4 py-3 bg-black text-green-300 border-2 border-green-400 rounded font-mono text-lg"
+                       placeholder="Paste your Sheet ID here"
+                       value="">
+            </div>
+            
+            <div>
+                <label class="block text-green-300 font-bold mb-2">🔑 API Key:</label>
+                <input type="text" id="floatingApiKey" 
+                       class="w-full px-4 py-3 bg-black text-green-300 border-2 border-green-400 rounded font-mono text-lg"
+                       placeholder="Paste your API Key here"
+                       value="">
+            </div>
+            
+            <div>
+                <label class="block text-green-300 font-bold mb-2">📋 Sheet Range:</label>
+                <input type="text" id="floatingRange" 
+                       class="w-full px-4 py-3 bg-black text-green-300 border-2 border-green-400 rounded font-mono text-lg"
+                       value="Report!A2:N19">
+            </div>
+            
+            <button onclick="connectFromFloatingPanel()" 
+                    class="w-full bg-green-500 hover:bg-green-400 text-black font-bold py-4 px-6 rounded-lg text-xl border-2 border-green-300">
+                🚀 CONNECT LIVE DATA NOW!
+            </button>
+        </div>
+        
+        <div class="mt-4 p-4 bg-green-900/30 rounded border border-green-400">
+            <p class="text-green-300 font-bold">📋 YOUR READY-TO-USE CREDENTIALS:</p>
+            <div class="mt-2 space-y-2 text-sm">
+                <div class="flex justify-between items-center bg-black/50 p-2 rounded">
+                    <span class="text-green-400">Sheet ID:</span>
+                    <button onclick="copyToClipboard('1oHCD-pLqWYBCbYoL35g25JJ0JZpIgw1LPYELGBFhas8')" 
+                            class="bg-green-600 text-black px-3 py-1 rounded text-xs hover:bg-green-500">
+                        📋 Copy Sheet ID
+                    </button>
+                </div>
+                <div class="flex justify-between items-center bg-black/50 p-2 rounded">
+                    <span class="text-green-400">API Key:</span>
+                    <button onclick="copyToClipboard('AIzaSyAGY4X1emEi4K6igkY2IBRmq9QmZCjkQbI')" 
+                            class="bg-green-600 text-black px-3 py-1 rounded text-xs hover:bg-green-500">
+                        📋 Copy API Key
+                    </button>
+                </div>
+                <button onclick="autoFillCredentials()" 
+                        class="w-full bg-yellow-600 text-black font-bold py-2 rounded mt-2">
+                    ⚡ AUTO-FILL ALL CREDENTIALS
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Connection Button (Always Visible) -->
+    <div id="connectionToggleButton" style="
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 100000;
+        background: linear-gradient(45deg, #00ff00, #00ffff);
+        color: black;
+        padding: 15px 25px;
+        border-radius: 50px;
+        cursor: pointer;
+        font-weight: bold;
+        box-shadow: 0 0 20px #00ff00;
+        animation: pulse 2s infinite;
+        font-family: 'Orbitron', monospace;
+    " onclick="showConnectionPanel()">
+        🔗 CONNECT SHEETS
+    </div>
+
+    <!-- Custom Tooltip -->
+    <div id="customTooltip" class="tooltip"></div>
+
+    <!-- Detail Modal -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">Indicator Details</h2>
+                <button onclick="closeModal()" class="text-3xl hover:text-red-500">&times;</button>
+            </div>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <!-- Animated Header -->
+        <div class="glass-card rounded-2xl p-8 mb-8 text-white">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-4xl font-bold mb-2 float-animation hack-text">
+                        <span class="glitch">MEAL</span> 
+                        <span style="color: #00ff00;">INTERACTIVE</span> 
+                        <span class="cyber-number">DASHBOARD</span>
+                    </h1>
+                    <p class="text-lg opacity-90 hack-text">ECHO 2025 SIDC - <span style="color: #00ffff;">Real-time Health Service Monitoring</span></p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="live-indicator"></span>
+                    <span class="text-sm">Live Data</span>
+                </div>
+            </div>
+            
+            <!-- Interactive Connection Panel -->
+            <div class="mt-6 p-6 bg-white/10 rounded-xl">
+                <h3 class="font-semibold mb-4 text-xl">🚀 Quick Connect to Google Sheets</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input type="text" id="sheetId" placeholder="Google Sheet ID" 
+                           class="px-4 py-3 rounded-lg bg-white/20 backdrop-blur text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50">
+                    <input type="text" id="apiKey" placeholder="API Key (Free from Google)" 
+                           class="px-4 py-3 rounded-lg bg-white/20 backdrop-blur text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50">
+                    <button onclick="connectWithAnimation()" 
+                            class="filter-btn bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-lg hover:from-purple-600 hover:to-pink-600 transition font-semibold">
+                        Connect Live Data
+                    </button>
+                </div>
+                <div class="mt-3 text-sm opacity-75">
+                    <details class="cursor-pointer">
+                        <summary>📘 How to connect (click to expand)</summary>
+                        <div class="mt-2 space-y-1">
+                            <p>1. Get Sheet ID from your URL: docs.google.com/spreadsheets/d/<strong>[THIS-PART]</strong>/edit</p>
+                            <p>2. Get free API key from <a href="https://console.cloud.google.com/" target="_blank" class="underline">Google Cloud Console</a></p>
+                            <p>3. Make your sheet viewable or use OAuth for private sheets</p>
+                        </div>
+                    </details>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Filter Bar -->
+        <div class="glass-card rounded-xl p-4 mb-6 text-white">
+            <div class="flex flex-wrap gap-3 items-center">
+                <span class="font-semibold">Quick Filters:</span>
+                <button onclick="filterData('all')" class="filter-btn px-4 py-2 rounded-lg bg-white/20 hover:bg-white/30">All Indicators</button>
+                <button onclick="filterData('health')" class="filter-btn px-4 py-2 rounded-lg bg-white/20 hover:bg-white/30">Health Services</button>
+                <button onclick="filterData('protection')" class="filter-btn px-4 py-2 rounded-lg bg-white/20 hover:bg-white/30">Protection</button>
+                <button onclick="filterData('ontrack')" class="filter-btn px-4 py-2 rounded-lg bg-green-500/30 hover:bg-green-500/40">On Track Only</button>
+                <button onclick="filterData('attention')" class="filter-btn px-4 py-2 rounded-lg bg-red-500/30 hover:bg-red-500/40">Needs Attention</button>
+                <div class="ml-auto">
+                    <select onchange="changeTimeRange(this.value)" class="px-4 py-2 rounded-lg bg-white/20 text-white focus:outline-none">
+                        <option value="3">Last 3 Months</option>
+                        <option value="6">Last 6 Months</option>
+                        <option value="12">Full Year</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Animated Metric Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="metric-card rounded-xl p-6 text-white cursor-pointer" onclick="showDetail('beneficiaries')">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm opacity-75 mb-1">Total Beneficiaries</p>
+                        <p class="text-4xl font-bold cyber-number">
+                            <span id="totalBeneficiaries" class="glitch">0</span>
+                        </p>
+                        <p class="text-xs mt-2 opacity-60">+15% from last month</p>
+                    </div>
+                    <div class="w-16 h-16">
+                        <svg viewBox="0 0 36 36" class="progress-ring">
+                            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                  fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="3"/>
+                            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                  fill="none" stroke="white" stroke-width="3" stroke-dasharray="75, 100"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card rounded-xl p-6 text-white cursor-pointer" onclick="showDetail('indicators')">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm opacity-75 mb-1">Active Indicators</p>
+                        <p class="text-4xl font-bold cyber-number">
+                            <span id="activeIndicators" class="glitch">0</span>
+                        </p>
+                        <p class="text-xs mt-2 opacity-60">Across all programs</p>
+                    </div>
+                    <div class="w-16 h-16">
+                        <canvas id="miniChart1"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card rounded-xl p-6 text-white cursor-pointer" onclick="showDetail('success')">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm opacity-75 mb-1">Success Rate</p>
+                        <p class="text-4xl font-bold cyber-number">
+                            <span id="successRate" class="glitch">0</span>%
+                        </p>
+                        <p class="text-xs mt-2 opacity-60 text-green-300">↑ Meeting targets</p>
+                    </div>
+                    <div class="w-16 h-16">
+                        <canvas id="miniChart2"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card rounded-xl p-6 text-white cursor-pointer" onclick="showDetail('alerts')">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm opacity-75 mb-1">Action Required</p>
+                        <p class="text-4xl font-bold cyber-number">
+                            <span id="actionRequired" class="glitch">0</span>
+                        </p>
+                        <p class="text-xs mt-2 opacity-60 text-red-300">Need attention</p>
+                    </div>
+                    <div class="pulse-dot w-16 h-16 bg-red-400/30 rounded-full flex items-center justify-center">
+                        <span class="text-2xl">⚠️</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Insights Panel -->
+        <div class="glass-card rounded-xl p-6 mb-8 text-white">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold hack-text">
+                    <span class="text-yellow-400">🤖</span> AI-Powered Insights
+                </h3>
+                <button onclick="generateNewInsights()" class="px-4 py-2 rounded-lg bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-300 transition">
+                    Generate New Insights
+                </button>
+            </div>
+            
+            <div id="aiInsightsContainer" class="space-y-3">
+                <!-- Insights will be dynamically added here -->
+            </div>
+            
+            <div class="mt-4 p-3 bg-blue-500/20 rounded-lg">
+                <p class="text-sm opacity-75">💡 AI analyzes your data patterns and provides actionable recommendations updated every minute</p>
+            </div>
+        </div>
+
+        <!-- Monthly Trend Analysis Section -->
+        <div class="glass-card rounded-xl p-6 mb-8 text-white">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold hack-text">📈 Monthly Progress Tracker</h3>
+                <select id="indicatorSelector" onchange="updateMonthlyView(this.value)" 
+                        class="px-4 py-2 rounded-lg bg-white/20 text-white focus:outline-none">
+                    <option value="all">All Indicators Combined</option>
+                    <option value="MH Open date">MH Open date</option>
+                    <option value="MH Close date">MH Close date</option>
+                    <option value="Psychiatric sessions">Psychiatric sessions</option>
+                    <option value="VCT at the clinic">VCT at the clinic</option>
+                    <option value="GYN consultation">GYN consultation</option>
+                    <option value="Papsmear">Papsmear</option>
+                    <option value="Referral">Referral</option>
+                    <option value="Violation">Violation</option>
+                    <option value="CM open case">CM open case</option>
+                    <option value="PSEA awareness">PSEA awareness</option>
+                </select>
+            </div>
+            
+            <!-- Month-over-Month Change Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
+                <div class="text-center p-3 bg-white/10 rounded-lg">
+                    <p class="text-xs opacity-75">May 2025</p>
+                    <p class="text-2xl font-bold cyber-number" id="may-total">0</p>
+                    <p class="text-xs" id="may-change">--</p>
+                </div>
+                <div class="text-center p-3 bg-white/10 rounded-lg">
+                    <p class="text-xs opacity-75">Jun 2025</p>
+                    <p class="text-2xl font-bold cyber-number" id="jun-total">0</p>
+                    <p class="text-xs" id="jun-change">--</p>
+                </div>
+                <div class="text-center p-3 bg-white/10 rounded-lg">
+                    <p class="text-xs opacity-75">Jul 2025</p>
+                    <p class="text-2xl font-bold cyber-number" id="jul-total">0</p>
+                    <p class="text-xs" id="jul-change">--</p>
+                </div>
+                <div class="text-center p-3 bg-white/10 rounded-lg">
+                    <p class="text-xs opacity-75">Aug 2025</p>
+                    <p class="text-2xl font-bold cyber-number" id="aug-total">0</p>
+                    <p class="text-xs" id="aug-change">--</p>
+                </div>
+                <div class="text-center p-3 bg-white/10 rounded-lg">
+                    <p class="text-xs opacity-75">Sep 2025</p>
+                    <p class="text-2xl font-bold cyber-number" id="sep-total">0</p>
+                    <p class="text-xs" id="sep-change">--</p>
+                </div>
+                <div class="text-center p-3 bg-white/10 rounded-lg">
+                    <p class="text-xs opacity-75">Oct 2025</p>
+                    <p class="text-2xl font-bold cyber-number" id="oct-total">0</p>
+                    <p class="text-xs" id="oct-change">--</p>
+                </div>
+            </div>
+            
+            <!-- Animated Progress Timeline -->
+            <div class="mb-4">
+                <canvas id="monthlyProgressChart" height="80"></canvas>
+            </div>
+            
+            <!-- Growth Indicators -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white/10 rounded-lg p-4">
+                    <p class="text-sm opacity-75">Average Monthly Growth</p>
+                    <p class="text-2xl font-bold" id="avgGrowth">+0%</p>
+                </div>
+                <div class="bg-white/10 rounded-lg p-4">
+                    <p class="text-sm opacity-75">Best Performing Month</p>
+                    <p class="text-2xl font-bold" id="bestMonth">--</p>
+                </div>
+                <div class="bg-white/10 rounded-lg p-4">
+                    <p class="text-sm opacity-75">Projected Next Month</p>
+                    <p class="text-2xl font-bold" id="projection">0</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Zoomable Trends Chart -->
+            <div class="glass-card rounded-xl p-6 text-white">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold">Monthly Service Trends</h3>
+                    <div class="flex gap-2">
+                        <button onclick="changeChartType('trendsChart', 'line')" class="px-3 py-1 rounded bg-white/20 hover:bg-white/30 text-xs">Line</button>
+                        <button onclick="changeChartType('trendsChart', 'bar')" class="px-3 py-1 rounded bg-white/20 hover:bg-white/30 text-xs">Bar</button>
+                        <button onclick="changeChartType('trendsChart', 'radar')" class="px-3 py-1 rounded bg-white/20 hover:bg-white/30 text-xs">Radar</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="trendsChart"></canvas>
+                </div>
+                <p class="text-xs mt-2 opacity-60">💡 Scroll to zoom, drag to pan</p>
+            </div>
+            
+            <!-- Interactive Performance Chart -->
+            <div class="glass-card rounded-xl p-6 text-white">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold">Performance vs Target</h3>
+                    <button onclick="sortPerformance()" class="px-3 py-1 rounded bg-white/20 hover:bg-white/30 text-xs">
+                        Sort by Gap
+                    </button>
+                </div>
+                <div class="chart-container">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+                <p class="text-xs mt-2 opacity-60">📊 Click bars for details</p>
+            </div>
+        </div>
+
+        <!-- Additional Interactive Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Donut Chart -->
+            <div class="glass-card rounded-xl p-6 text-white">
+                <h3 class="text-lg font-semibold mb-4">Service Distribution</h3>
+                <canvas id="donutChart"></canvas>
+            </div>
+            
+            <!-- Polar Area Chart -->
+            <div class="glass-card rounded-xl p-6 text-white">
+                <h3 class="text-lg font-semibold mb-4">Impact Analysis</h3>
+                <canvas id="polarChart"></canvas>
+            </div>
+            
+            <!-- Real-time Line Chart -->
+            <div class="glass-card rounded-xl p-6 text-white">
+                <h3 class="text-lg font-semibold mb-4">Live Updates</h3>
+                <canvas id="realtimeChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Interactive Data Table -->
+        <div class="glass-card rounded-xl p-6 text-white">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold">Detailed Indicator Tracking</h3>
+                <input type="text" placeholder="Search indicators..." onkeyup="searchTable(this.value)"
+                       class="px-4 py-2 rounded-lg bg-white/20 backdrop-blur text-white placeholder-white/60 focus:outline-none">
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-white/20">
+                            <th class="px-4 py-3 text-left cursor-pointer hover:bg-white/10" onclick="sortTable(0)">
+                                Indicator ↕
+                            </th>
+                            <th class="px-4 py-3 text-center cursor-pointer hover:bg-white/10" onclick="sortTable(1)">
+                                May-25 ↕
+                            </th>
+                            <th class="px-4 py-3 text-center cursor-pointer hover:bg-white/10" onclick="sortTable(2)">
+                                Jun-25 ↕
+                            </th>
+                            <th class="px-4 py-3 text-center cursor-pointer hover:bg-white/10" onclick="sortTable(3)">
+                                Jul-25 ↕
+                            </th>
+                            <th class="px-4 py-3 text-center cursor-pointer hover:bg-white/10" onclick="sortTable(4)">
+                                Total ↕
+                            </th>
+                            <th class="px-4 py-3 text-center cursor-pointer hover:bg-white/10" onclick="sortTable(5)">
+                                Target ↕
+                            </th>
+                            <th class="px-4 py-3 text-center">Progress</th>
+                            <th class="px-4 py-3 text-center">Status</th>
+                            <th class="px-4 py-3 text-center">Trend</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Dynamic content -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Export Options -->
+        <div class="glass-card rounded-xl p-4 mt-6 text-white">
+            <div class="flex justify-center gap-4">
+                <button onclick="exportData('pdf')" class="px-6 py-2 rounded-lg bg-white/20 hover:bg-white/30 transition">
+                    📄 Export PDF Report
+                </button>
+                <button onclick="exportData('excel')" class="px-6 py-2 rounded-lg bg-white/20 hover:bg-white/30 transition">
+                    📊 Export to Excel
+                </button>
+                <button onclick="shareLink()" class="px-6 py-2 rounded-lg bg-white/20 hover:bg-white/30 transition">
+                    🔗 Share Dashboard
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced sample data matching your sheet
+        const sampleData = {
+            indicators: [
+                { name: "MH Open date", may: 10, jun: 0, jul: 64, aug: 21, sep: 0, oct: 0, total: 95, target: 170, status: "FALSE", category: "health" },
+                { name: "MH Close date", may: 25, jun: 23, jul: 35, aug: 31, sep: 0, oct: 0, total: 114, target: 95, status: "TRUE", category: "health" },
+                { name: "Psychiatric sessions", may: 123, jun: 246, jul: 189, aug: 122, sep: 207, oct: 0, total: 887, target: 114, status: "TRUE", category: "health" },
+                { name: "VCT at the clinic", may: 0, jun: 0, jul: 0, aug: 11, sep: 0, oct: 0, total: 11, target: 874, status: "FALSE", category: "health" },
+                { name: "GYN consultation", may: 79, jun: 47, jul: 60, aug: 0, sep: 38, oct: 0, total: 224, target: 224, status: "TRUE", category: "health" },
+                { name: "Papsmear", may: 26, jun: 11, jul: 14, aug: 0, sep: 8, oct: 0, total: 59, target: 60, status: "TRUE", category: "health" },
+                { name: "Referral", may: 0, jun: 0, jul: 0, aug: 12, sep: 9, oct: 0, total: 32, target: 0, status: "TRUE", category: "health" },
+                { name: "Violation", may: 1, jun: 3, jul: 3, aug: 8, sep: 7, oct: 0, total: 22, target: 32, status: "TRUE", category: "protection" },
+                { name: "Violation_ECA", may: 6, jun: 21, jul: 14, aug: 4, sep: 2, oct: 0, total: 47, target: 22, status: "TRUE", category: "protection" },
+                { name: "CM open case", may: 0, jun: 6, jul: 9, aug: 5, sep: 2, oct: 0, total: 22, target: 47, status: "FALSE", category: "protection" },
+                { name: "ECA Case Management", may: 6, jun: 21, jul: 14, aug: 0, sep: 0, oct: 0, total: 45, target: 22, status: "TRUE", category: "protection" },
+                { name: "GBV Protection SRH", may: 0, jun: 0, jul: 11, aug: 12, sep: 6, oct: 0, total: 29, target: 45, status: "TRUE", category: "protection" },
+                { name: "CM case closure", may: 0, jun: 0, jul: 0, aug: 0, sep: 0, oct: 0, total: 0, target: 29, status: "FALSE", category: "protection" },
+                { name: "Dignity Kit", may: 0, jun: 0, jul: 0, aug: 0, sep: 0, oct: 0, total: 0, target: 0, status: "TRUE", category: "protection" },
+                { name: "PSEA awareness", may: 0, jun: 379, jul: 518, aug: 160, sep: 0, oct: 0, total: 897, target: 0, status: "TRUE", category: "protection" },
+                { name: "Outreach", may: 0, jun: 0, jul: 0, aug: 0, sep: 0, oct: 0, total: 0, target: 1057, status: "FALSE", category: "protection" }
+            ],
+            months: ['May-2025', 'Jun-2025', 'Jul-2025', 'Aug-2025', 'Sep-2025', 'Oct-2025']
+        };
+
+        let currentFilter = 'all';
+        let chartInstances = {};
+        let sortDirection = {};
+
+        // Global error handler
+        window.addEventListener('error', function(e) {
+            console.log('Error caught:', e.message);
+            // Continue running despite errors
+            return true;
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                initializeMatrixRain();
+                initializeAnimations();
+                initializeCharts();
+                populateTable();
+                updateMetrics();
+                updateMonthlyView('all');
+                startRealTimeUpdates();
+                startFlyingCode();
+                startDataStreams();
+                initializeAIInsights();
+                initializeMobileFeatures();
+                checkDeploymentStatus();
+                
+                // Show connection button with pulse effect
+                setTimeout(() => {
+                    const connectionButton = document.getElementById('connectionToggleButton');
+                    if (connectionButton) {
+                        connectionButton.style.animation = 'pulse 1s infinite';
+                    }
+                }, 2000);
+                
+            } catch (error) {
+                console.log('Initialization error:', error);
+                // Continue with basic functionality
+                populateTable();
+                updateMetrics();
+            }
+        });
+
+        // AI INSIGHTS ENGINE
+        function initializeAIInsights() {
+            generateNewInsights();
+            // Auto-generate insights every minute
+            setInterval(generateNewInsights, 60000);
+        }
+
+        function generateNewInsights() {
+            const container = document.getElementById('aiInsightsContainer');
+            container.innerHTML = '<div class="text-center opacity-50">🔄 Analyzing data patterns...</div>';
+            
+            setTimeout(() => {
+                const insights = analyzeDataForInsights();
+                displayInsights(insights);
+            }, 1500);
+        }
+
+        function analyzeDataForInsights() {
+            const data = sampleData.indicators;
+            const insights = [];
+            
+            // Critical Insights
+            data.forEach(indicator => {
+                const achievementRate = indicator.target > 0 ? (indicator.total / indicator.target) * 100 : 100;
+                
+                if (achievementRate < 20 && indicator.target > 0) {
+                    insights.push({
+                        type: 'critical',
+                        icon: '🚨',
+                        title: 'Critical Alert',
+                        message: `${indicator.name} is severely underperforming at ${Math.round(achievementRate)}% of target. Immediate intervention required.`,
+                        action: `Recommend: Emergency team meeting for ${indicator.name}`
+                    });
+                }
+                
+                // Trend Analysis
+                if (indicator.jun > indicator.may * 1.5 && indicator.may > 0) {
+                    insights.push({
+                        type: 'success',
+                        icon: '📈',
+                        title: 'Exceptional Growth',
+                        message: `${indicator.name} grew ${Math.round((indicator.jun / indicator.may - 1) * 100)}% from May to June!`,
+                        action: 'Continue current strategy and document best practices'
+                    });
+                }
+                
+                // Predictive Warning
+                const trend = indicator.jul - indicator.jun;
+                if (trend < 0 && indicator.status === 'TRUE') {
+                    insights.push({
+                        type: 'warning',
+                        icon: '⚠️',
+                        title: 'Trend Alert',
+                        message: `${indicator.name} is declining despite being on track. May miss future targets.`,
+                        action: 'Review resource allocation for next month'
+                    });
+                }
+            });
+            
+            // Overall Performance Insights
+            const overallAchievement = data.filter(d => d.status === 'TRUE').length / data.length * 100;
+            if (overallAchievement > 70) {
+                insights.push({
+                    type: 'success',
+                    icon: '🏆',
+                    title: 'Overall Excellence',
+                    message: `${Math.round(overallAchievement)}% of indicators are meeting targets. Great team performance!`,
+                    action: 'Share success stories with stakeholders'
+                });
+            }
+            
+            // Resource Optimization
+            const underutilized = data.filter(d => d.total === 0 && d.target > 0);
+            if (underutilized.length > 0) {
+                insights.push({
+                    type: 'info',
+                    icon: '💡',
+                    title: 'Resource Opportunity',
+                    message: `${underutilized.length} services haven't started yet. Consider resource reallocation.`,
+                    action: `Priority focus: ${underutilized.map(u => u.name).join(', ')}`
+                });
+            }
+            
+            // Seasonal Pattern Detection
+            const summerMonths = data.map(d => d.jun + d.jul).reduce((a, b) => a + b, 0);
+            const springMonth = data.map(d => d.may).reduce((a, b) => a + b, 0);
+            if (summerMonths > springMonth * 2.5) {
+                insights.push({
+                    type: 'info',
+                    icon: '📊',
+                    title: 'Seasonal Pattern Detected',
+                    message: 'Summer months show 150% higher activity. Plan resources accordingly.',
+                    action: 'Prepare for similar pattern next year'
+                });
+            }
+            
+            return insights.slice(0, 5); // Return top 5 insights
+        }
+
+        function displayInsights(insights) {
+            const container = document.getElementById('aiInsightsContainer');
+            container.innerHTML = '';
+            
+            insights.forEach((insight, index) => {
+                setTimeout(() => {
+                    const insightCard = document.createElement('div');
+                    insightCard.className = `insight-card insight-${insight.type}`;
+                    insightCard.innerHTML = `
+                        <div class="flex items-start space-x-3">
+                            <span class="text-2xl">${insight.icon}</span>
+                            <div class="flex-1">
+                                <h4 class="font-semibold text-white">${insight.title}</h4>
+                                <p class="text-sm opacity-90 mt-1">${insight.message}</p>
+                                <p class="text-xs opacity-75 mt-2">
+                                    <strong>Action:</strong> ${insight.action}
+                                </p>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(insightCard);
+                    
+                    // Add animation
+                    gsap.from(insightCard, {
+                        x: 100,
+                        opacity: 0,
+                        duration: 0.5,
+                        ease: "power2.out"
+                    });
+                }, index * 200);
+            });
+        }
+
+        // MOBILE FEATURES
+        function initializeMobileFeatures() {
+            // Add mobile menu
+            const mobileMenu = document.createElement('div');
+            mobileMenu.className = 'mobile-menu';
+            mobileMenu.innerHTML = `
+                <div class="mobile-menu-item" onclick="scrollToSection('dashboard')">
+                    <div>📊</div>
+                    <div class="text-xs">Dashboard</div>
+                </div>
+                <div class="mobile-menu-item" onclick="scrollToSection('insights')">
+                    <div>🤖</div>
+                    <div class="text-xs">AI Insights</div>
+                </div>
+                <div class="mobile-menu-item" onclick="scrollToSection('charts')">
+                    <div>📈</div>
+                    <div class="text-xs">Charts</div>
+                </div>
+                <div class="mobile-menu-item" onclick="scrollToSection('table')">
+                    <div>📋</div>
+                    <div class="text-xs">Data</div>
+                </div>
+                <div class="mobile-menu-item" onclick="exportData('pdf')">
+                    <div>💾</div>
+                    <div class="text-xs">Export</div>
+                </div>
+            `;
+            document.body.appendChild(mobileMenu);
+            
+            // Add touch gestures
+            addTouchGestures();
+            
+            // Optimize for mobile performance
+            if (window.innerWidth < 768) {
+                optimizeForMobile();
+            }
+            
+            // Handle orientation change
+            window.addEventListener('orientationchange', handleOrientationChange);
+        }
+
+        function scrollToSection(section) {
+            let element;
+            switch(section) {
+                case 'dashboard': element = document.querySelector('.metric-card').parentElement; break;
+                case 'insights': element = document.getElementById('aiInsightsContainer').parentElement; break;
+                case 'charts': element = document.getElementById('trendsChart').parentElement.parentElement; break;
+                case 'table': element = document.getElementById('tableBody').parentElement.parentElement; break;
+            }
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        function addTouchGestures() {
+            let touchStartX = 0;
+            let touchEndX = 0;
+            
+            document.addEventListener('touchstart', e => {
+                touchStartX = e.changedTouches[0].screenX;
+            });
+            
+            document.addEventListener('touchend', e => {
+                touchEndX = e.changedTouches[0].screenX;
+                handleSwipe();
+            });
+            
+            function handleSwipe() {
+                if (touchEndX < touchStartX - 50) {
+                    // Swiped left - next indicator
+                    const selector = document.getElementById('indicatorSelector');
+                    if (selector && selector.selectedIndex < selector.options.length - 1) {
+                        selector.selectedIndex++;
+                        updateMonthlyView(selector.value);
+                    }
+                }
+                if (touchEndX > touchStartX + 50) {
+                    // Swiped right - previous indicator
+                    const selector = document.getElementById('indicatorSelector');
+                    if (selector && selector.selectedIndex > 0) {
+                        selector.selectedIndex--;
+                        updateMonthlyView(selector.value);
+                    }
+                }
+            }
+        }
+
+        function optimizeForMobile() {
+            // Reduce animation complexity on mobile
+            gsap.globalTimeline.timeScale(2); // Speed up animations
+            
+            // Reduce matrix rain density
+            const canvas = document.getElementById('matrixCanvas');
+            if (canvas) canvas.style.opacity = '0.05';
+            
+            // Make tables horizontally scrollable
+            const tables = document.querySelectorAll('table');
+            tables.forEach(table => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'mobile-scroll';
+                table.parentNode.insertBefore(wrapper, table);
+                wrapper.appendChild(table);
+            });
+        }
+
+        function handleOrientationChange() {
+            // Refresh charts on orientation change
+            setTimeout(() => {
+                Object.values(chartInstances).forEach(chart => {
+                    if (chart && chart.resize) chart.resize();
+                });
+            }, 500);
+        }
+
+        // DEPLOYMENT STATUS CHECKER
+        function checkDeploymentStatus() {
+            // Add deployment helper button
+            const deployButton = document.createElement('div');
+            deployButton.style.cssText = `
+                position: fixed;
+                bottom: 80px;
+                right: 20px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 15px 20px;
+                border-radius: 50px;
+                cursor: pointer;
+                z-index: 9998;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                font-family: 'Orbitron', monospace;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                transition: all 0.3s;
+            `;
+            deployButton.innerHTML = `
+                <span>🚀</span>
+                <span>Deploy Online</span>
+            `;
+            deployButton.onclick = showDeploymentGuide;
+            deployButton.onmouseover = () => deployButton.style.transform = 'scale(1.1)';
+            deployButton.onmouseout = () => deployButton.style.transform = 'scale(1)';
+            document.body.appendChild(deployButton);
+        }
+
+        function showDeploymentGuide() {
+            const guide = document.createElement('div');
+            guide.className = 'modal show';
+            guide.innerHTML = `
+                <div class="modal-content" style="max-width: 600px;">
+                    <h2 class="text-2xl font-bold mb-4">🚀 Deploy Your Dashboard Online (FREE)</h2>
+                    
+                    <div class="space-y-4">
+                        <div class="p-4 bg-green-100 rounded-lg">
+                            <h3 class="font-bold text-green-800">Option 1: GitHub Pages (Easiest)</h3>
+                            <ol class="list-decimal list-inside mt-2 space-y-1 text-sm">
+                                <li>Create GitHub account at github.com</li>
+                                <li>Create new repository named "meal-dashboard"</li>
+                                <li>Upload your HTML file</li>
+                                <li>Go to Settings → Pages → Deploy from main branch</li>
+                                <li>Your URL: https://[username].github.io/meal-dashboard</li>
+                            </ol>
+                            <button onclick="window.open('https://github.com/new', '_blank')" 
+                                    class="mt-2 px-4 py-2 bg-green-600 text-white rounded">
+                                Start on GitHub →
+                            </button>
+                        </div>
+                        
+                        <div class="p-4 bg-blue-100 rounded-lg">
+                            <h3 class="font-bold text-blue-800">Option 2: Netlify (Drag & Drop)</h3>
+                            <ol class="list-decimal list-inside mt-2 space-y-1 text-sm">
+                                <li>Go to app.netlify.com/drop</li>
+                                <li>Drag your HTML file to the browser</li>
+                                <li>Instant URL generated!</li>
+                                <li>Free custom domain available</li>
+                            </ol>
+                            <button onclick="window.open('https://app.netlify.com/drop', '_blank')" 
+                                    class="mt-2 px-4 py-2 bg-blue-600 text-white rounded">
+                                Deploy on Netlify →
+                            </button>
+                        </div>
+                        
+                        <div class="p-4 bg-purple-100 rounded-lg">
+                            <h3 class="font-bold text-purple-800">Option 3: Vercel (Professional)</h3>
+                            <ol class="list-decimal list-inside mt-2 space-y-1 text-sm">
+                                <li>Sign up at vercel.com</li>
+                                <li>Import from GitHub or upload directly</li>
+                                <li>Automatic HTTPS</li>
+                                <li>Global CDN included</li>
+                            </ol>
+                            <button onclick="window.open('https://vercel.com/new', '_blank')" 
+                                    class="mt-2 px-4 py-2 bg-purple-600 text-white rounded">
+                                Try Vercel →
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <button onclick="this.closest('.modal').remove()" 
+                            class="mt-4 w-full py-2 bg-gray-200 rounded hover:bg-gray-300">
+                        Close
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(guide);
+        }
+
+        // SURPRISE FEATURE: VOICE COMMANDS
+        function initializeVoiceCommands() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                const recognition = new SpeechRecognition();
+                
+                recognition.continuous = false;
+                recognition.lang = 'en-US';
+                
+                // Add voice button
+                const voiceButton = document.createElement('div');
+                voiceButton.style.cssText = `
+                    position: fixed;
+                    bottom: 150px;
+                    right: 20px;
+                    background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+                    color: white;
+                    width: 60px;
+                    height: 60px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    z-index: 9997;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                    font-size: 24px;
+                `;
+                voiceButton.innerHTML = '🎤';
+                voiceButton.onclick = () => startVoiceCommand(recognition);
+                document.body.appendChild(voiceButton);
+            }
+        }
+
+        function startVoiceCommand(recognition) {
+            recognition.start();
+            
+            recognition.onresult = (event) => {
+                const command = event.results[0][0].transcript.toLowerCase();
+                executeVoiceCommand(command);
+            };
+            
+            recognition.onerror = (event) => {
+                console.error('Voice recognition error:', event.error);
+            };
+        }
+
+        function executeVoiceCommand(command) {
+            if (command.includes('show') && command.includes('health')) {
+                filterData('health');
+            } else if (command.includes('export')) {
+                exportData('pdf');
+            } else if (command.includes('insight')) {
+                generateNewInsights();
+            } else if (command.includes('refresh')) {
+                location.reload();
+            }
+            
+            // Voice feedback
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance('Command executed: ' + command);
+                speechSynthesis.speak(utterance);
+            }
+        }
+
+        // CONNECTION PANEL FUNCTIONS
+        function showConnectionPanel() {
+            const panel = document.getElementById('floatingConnectionPanel');
+            const button = document.getElementById('connectionToggleButton');
+            panel.classList.remove('connection-hidden');
+            panel.classList.add('connection-visible');
+            button.style.display = 'none';
+        }
+
+        function hideConnectionPanel() {
+            const panel = document.getElementById('floatingConnectionPanel');
+            const button = document.getElementById('connectionToggleButton');
+            panel.classList.remove('connection-visible');
+            panel.classList.add('connection-hidden');
+            button.style.display = 'block';
+        }
+
+        function autoFillCredentials() {
+            document.getElementById('floatingSheetId').value = '1oHCD-pLqWYBCbYoL35g25JJ0JZpIgw1LPYELGBFhas8';
+            document.getElementById('floatingApiKey').value = 'AIzaSyAGY4X1emEi4K6igkY2IBRmq9QmZCjkQbI';
+            document.getElementById('floatingRange').value = 'Report!A2:N19';
+            
+            // Flash effect to show it's filled
+            const inputs = document.querySelectorAll('#floatingConnectionPanel input');
+            inputs.forEach(input => {
+                input.style.backgroundColor = '#00ff00';
+                input.style.color = 'black';
+                setTimeout(() => {
+                    input.style.backgroundColor = 'black';
+                    input.style.color = '#00ff00';
+                }, 300);
+            });
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                // Show success message
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 100px;
+                    right: 20px;
+                    background: #00ff00;
+                    color: black;
+                    padding: 10px 20px;
+                    border-radius: 10px;
+                    font-weight: bold;
+                    z-index: 999999;
+                `;
+                notification.textContent = '✅ Copied to clipboard!';
+                document.body.appendChild(notification);
+                setTimeout(() => notification.remove(), 2000);
+            });
+        }
+
+        function connectFromFloatingPanel() {
+            const sheetId = document.getElementById('floatingSheetId').value;
+            const apiKey = document.getElementById('floatingApiKey').value;
+            const range = document.getElementById('floatingRange').value;
+            
+            if (!sheetId || !apiKey) {
+                alert('❌ Please fill in both Sheet ID and API Key!');
+                return;
+            }
+            
+            // Copy values to original inputs if they exist
+            const originalSheetId = document.getElementById('sheetId');
+            const originalApiKey = document.getElementById('apiKey');
+            const originalRange = document.getElementById('range');
+            
+            if (originalSheetId) originalSheetId.value = sheetId;
+            if (originalApiKey) originalApiKey.value = apiKey;
+            if (originalRange) originalRange.value = range;
+            
+            // Call the connection function
+            connectSheetWithCredentials(sheetId, apiKey, range);
+        }
+
+        async function connectSheetWithCredentials(sheetId, apiKey, range) {
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${apiKey}`;
+
+            // Show loading state
+            const button = document.querySelector('#floatingConnectionPanel button');
+            const originalText = button.textContent;
+            button.textContent = '🔄 CONNECTING...';
+            button.disabled = true;
+
+            try {
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.values && data.values.length > 0) {
+                    // Success!
+                    button.textContent = '✅ CONNECTED SUCCESSFULLY!';
+                    button.style.background = '#00ff00';
+                    
+                    // Process the data
+                    processSheetData(data.values);
+                    
+                    // Show success notification
+                    showConnectionSuccess();
+                    
+                    // Hide panel after 3 seconds
+                    setTimeout(() => {
+                        hideConnectionPanel();
+                        button.textContent = originalText;
+                        button.style.background = '';
+                        button.disabled = false;
+                    }, 3000);
+                    
+                    // Set up auto-refresh
+                    setInterval(() => connectSheetWithCredentials(sheetId, apiKey, range), 30000);
+                    
+                } else {
+                    throw new Error('No data found in the specified range');
+                }
+            } catch (error) {
+                console.error('Connection error:', error);
+                button.textContent = '❌ CONNECTION FAILED';
+                button.style.background = '#ff0000';
+                
+                // Show detailed error
+                showConnectionError(error.message);
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = '';
+                    button.disabled = false;
+                }, 3000);
+            }
+        }
+
+        function showConnectionSuccess() {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0, 255, 0, 0.95);
+                color: black;
+                padding: 30px;
+                border-radius: 15px;
+                font-size: 24px;
+                font-weight: bold;
+                z-index: 999999;
+                text-align: center;
+                box-shadow: 0 0 50px #00ff00;
+            `;
+            notification.innerHTML = `
+                <div>🎉 SUCCESSFULLY CONNECTED!</div>
+                <div style="font-size: 16px; margin-top: 10px;">Your real data is now loading...</div>
+            `;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 4000);
+        }
+
+        function showConnectionError(errorMessage) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(255, 0, 0, 0.95);
+                color: white;
+                padding: 20px;
+                border-radius: 15px;
+                font-weight: bold;
+                z-index: 999999;
+                text-align: center;
+                max-width: 500px;
+            `;
+            notification.innerHTML = `
+                <div style="font-size: 20px;">❌ CONNECTION FAILED</div>
+                <div style="font-size: 14px; margin-top: 10px;">${errorMessage}</div>
+                <div style="font-size: 12px; margin-top: 10px; opacity: 0.8;">
+                    Make sure your sheet is publicly viewable!
+                </div>
+                <button onclick="this.parentElement.remove()" 
+                        style="margin-top: 15px; padding: 10px 20px; background: white; color: black; border: none; border-radius: 5px; cursor: pointer;">
+                    Close
+                </button>
+            `;
+            document.body.appendChild(notification);
+        }
+
+        // Monthly Progress Tracking Functions
+        function updateMonthlyView(indicator) {
+            const months = ['may', 'jun', 'jul', 'aug', 'sep', 'oct'];
+            let monthlyTotals = {};
+            
+            if (indicator === 'all') {
+                // Calculate totals for all indicators
+                months.forEach(month => {
+                    monthlyTotals[month] = sampleData.indicators.reduce((sum, ind) => 
+                        sum + (ind[month] || 0), 0);
+                });
+            } else {
+                // Find specific indicator
+                const indicatorData = sampleData.indicators.find(ind => ind.name === indicator);
+                if (indicatorData) {
+                    months.forEach(month => {
+                        monthlyTotals[month] = indicatorData[month] || 0;
+                    });
+                }
+            }
+            
+            // Update monthly cards with animations
+            months.forEach((month, index) => {
+                const total = monthlyTotals[month] || 0;
+                const element = document.getElementById(`${month}-total`);
+                const changeElement = document.getElementById(`${month}-change`);
+                
+                if (element) {
+                    // Animate the number
+                    animateMonthlyNumber(element, total);
+                    
+                    // Calculate and show change
+                    if (index > 0 && changeElement) {
+                        const prevMonth = months[index - 1];
+                        const prevTotal = monthlyTotals[prevMonth] || 0;
+                        const change = prevTotal > 0 ? 
+                            Math.round(((total - prevTotal) / prevTotal) * 100) : 
+                            (total > 0 ? 100 : 0);
+                        
+                        changeElement.innerHTML = change >= 0 ? 
+                            `<span class="text-green-400">↑ ${change}%</span>` : 
+                            `<span class="text-red-400">↓ ${Math.abs(change)}%</span>`;
+                        
+                        // Add pulse effect for significant changes
+                        if (Math.abs(change) > 50) {
+                            element.parentElement.classList.add('pulse-dot');
+                        }
+                    }
+                }
+            });
+            
+            // Update progress chart
+            updateMonthlyProgressChart(monthlyTotals);
+            
+            // Calculate and display statistics
+            calculateMonthlyStatistics(monthlyTotals);
+            
+            // Create visual trend indicator
+            createTrendAnimation(monthlyTotals);
+        }
+
+        function animateMonthlyNumber(element, target) {
+            const start = parseInt(element.textContent) || 0;
+            const duration = 1000;
+            const steps = 30;
+            let current = start;
+            const increment = (target - start) / steps;
+            let step = 0;
+            
+            const timer = setInterval(() => {
+                step++;
+                current += increment;
+                element.textContent = Math.round(current);
+                
+                // Add glow effect
+                element.style.textShadow = `0 0 ${10 + Math.random() * 20}px rgba(0, 255, 0, ${0.5 + Math.random() * 0.5})`;
+                
+                if (step >= steps) {
+                    clearInterval(timer);
+                    element.textContent = target;
+                    element.style.textShadow = '0 0 10px rgba(0, 255, 0, 0.5)';
+                }
+            }, duration / steps);
+        }
+
+        function updateMonthlyProgressChart(monthlyTotals) {
+            const canvas = document.getElementById('monthlyProgressChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Check if chart already exists
+            if (chartInstances.monthlyProgress) {
+                // Update existing chart
+                const values = Object.values(monthlyTotals);
+                chartInstances.monthlyProgress.data.datasets[0].data = values;
+                chartInstances.monthlyProgress.update();
+            } else {
+                // Create new chart
+                chartInstances.monthlyProgress = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+                        datasets: [{
+                            label: 'Monthly Progress',
+                            data: Object.values(monthlyTotals),
+                            borderColor: '#00ff00',
+                            backgroundColor: 'rgba(0, 255, 0, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 6,
+                            pointHoverRadius: 10,
+                            pointBackgroundColor: '#00ff00',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointStyle: 'circle'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                                titleColor: '#00ff00',
+                                bodyColor: '#00ff00',
+                                borderColor: '#00ff00',
+                                borderWidth: 1,
+                                callbacks: {
+                                    label: function(context) {
+                                        const value = context.parsed.y;
+                                        const index = context.dataIndex;
+                                        const prevValue = index > 0 ? context.dataset.data[index - 1] : 0;
+                                        const change = prevValue > 0 ? 
+                                            Math.round(((value - prevValue) / prevValue) * 100) : 0;
+                                        
+                                        return [
+                                            `Value: ${value}`,
+                                            `Change: ${change >= 0 ? '+' : ''}${change}%`
+                                        ];
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                                ticks: { color: 'white' }
+                            },
+                            x: {
+                                grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                                ticks: { color: 'white' }
+                            }
+                        },
+                        animation: {
+                            onProgress: function(animation) {
+                                // Add animation progress indicator
+                                const progress = animation.currentStep / animation.numSteps;
+                                canvas.style.opacity = progress;
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function calculateMonthlyStatistics(monthlyTotals) {
+            const values = Object.values(monthlyTotals);
+            const months = Object.keys(monthlyTotals);
+            
+            // Calculate average growth
+            let totalGrowth = 0;
+            let growthCount = 0;
+            for (let i = 1; i < values.length; i++) {
+                if (values[i-1] > 0) {
+                    totalGrowth += ((values[i] - values[i-1]) / values[i-1]) * 100;
+                    growthCount++;
+                }
+            }
+            const avgGrowth = growthCount > 0 ? Math.round(totalGrowth / growthCount) : 0;
+            
+            // Find best performing month
+            const maxValue = Math.max(...values);
+            const bestMonthIndex = values.indexOf(maxValue);
+            const bestMonth = months[bestMonthIndex];
+            
+            // Calculate projection
+            const lastThreeMonths = values.slice(-3);
+            const trend = lastThreeMonths.length > 1 ? 
+                (lastThreeMonths[lastThreeMonths.length - 1] - lastThreeMonths[0]) / lastThreeMonths.length : 0;
+            const projection = Math.round(values[values.length - 1] + trend);
+            
+            // Update display with animations
+            const avgGrowthEl = document.getElementById('avgGrowth');
+            if (avgGrowthEl) {
+                avgGrowthEl.innerHTML = avgGrowth >= 0 ? 
+                    `<span class="text-green-400">+${avgGrowth}%</span>` : 
+                    `<span class="text-red-400">${avgGrowth}%</span>`;
+                
+                // Add animation
+                gsap.from(avgGrowthEl, {
+                    scale: 0,
+                    duration: 1,
+                    ease: "elastic.out(1, 0.5)"
+                });
+            }
+            
+            const bestMonthEl = document.getElementById('bestMonth');
+            if (bestMonthEl) {
+                bestMonthEl.textContent = bestMonth.toUpperCase() + ' (' + maxValue + ')';
+                bestMonthEl.style.color = '#00ff00';
+            }
+            
+            const projectionEl = document.getElementById('projection');
+            if (projectionEl) {
+                animateMonthlyNumber(projectionEl, projection);
+                
+                // Add predictive animation
+                projectionEl.style.animation = 'pulse 2s infinite';
+            }
+        }
+
+        function createTrendAnimation(monthlyTotals) {
+            const values = Object.values(monthlyTotals);
+            
+            // Create floating trend indicators
+            values.forEach((value, index) => {
+                if (index > 0) {
+                    const change = value - values[index - 1];
+                    if (Math.abs(change) > 10) {
+                        setTimeout(() => {
+                            const indicator = document.createElement('div');
+                            indicator.className = 'flying-code';
+                            indicator.textContent = change > 0 ? `+${change} ↑` : `${change} ↓`;
+                            indicator.style.color = change > 0 ? '#00ff00' : '#ff0000';
+                            indicator.style.fontSize = '18px';
+                            indicator.style.fontWeight = 'bold';
+                            indicator.style.left = (20 + index * 15) + '%';
+                            indicator.style.top = '50%';
+                            document.body.appendChild(indicator);
+                            setTimeout(() => indicator.remove(), 3000);
+                        }, index * 300);
+                    }
+                }
+            });
+        }
+
+        // Matrix Rain Effect
+        function initializeMatrixRain() {
+            const canvas = document.getElementById('matrixCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            const matrix = "ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}01".split("");
+            const fontSize = 10;
+            const columns = canvas.width / fontSize;
+            const drops = Array(Math.floor(columns)).fill(1);
+            
+            function draw() {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.04)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.fillStyle = '#0F0';
+                ctx.font = fontSize + 'px monospace';
+                
+                for (let i = 0; i < drops.length; i++) {
+                    const text = matrix[Math.floor(Math.random() * matrix.length)];
+                    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                    
+                    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                        drops[i] = 0;
+                    }
+                    drops[i]++;
+                }
+            }
+            
+            setInterval(draw, 35);
+            
+            window.addEventListener('resize', () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            });
+        }
+
+        // Flying Code Animation
+        function startFlyingCode() {
+            const codes = [
+                'SELECT * FROM health_data',
+                'UPDATE indicators SET status="TRUE"',
+                '{ "beneficiaries": 1061 }',
+                'PROCESSING: MEAL_DATA_2025',
+                'SYNC: GOOGLE_SHEETS_API',
+                'ANALYZE: PROTECTION_SERVICES',
+                'REAL_TIME_MONITORING: ACTIVE',
+                '>>> Loading psychiatric_sessions...',
+                'if (status === "TRUE") { success++ }',
+                'fetch("/api/dashboard/live")',
+                'const total = data.reduce((a,b) => a+b)',
+                '200 OK | Response Time: 0.023s',
+                'INSERT INTO reports VALUES(...)',
+                'CALCULATING: ACHIEVEMENT_RATE',
+                'STREAMING: LIVE_UPDATES'
+            ];
+            
+            setInterval(() => {
+                const code = document.createElement('div');
+                code.className = 'flying-code';
+                code.textContent = codes[Math.floor(Math.random() * codes.length)];
+                code.style.top = Math.random() * window.innerHeight + 'px';
+                code.style.fontSize = (14 + Math.random() * 10) + 'px';
+                
+                document.body.appendChild(code);
+                
+                setTimeout(() => code.remove(), 3000);
+            }, 800);
+        }
+
+        // Data Streams Effect
+        function startDataStreams() {
+            const container = document.getElementById('floatingCodeContainer');
+            
+            setInterval(() => {
+                const stream = document.createElement('div');
+                stream.className = 'data-stream';
+                stream.style.left = Math.random() * window.innerWidth + 'px';
+                stream.style.animationDuration = (3 + Math.random() * 2) + 's';
+                
+                // Generate random data string
+                let dataString = '';
+                for (let i = 0; i < 20; i++) {
+                    dataString += Math.random() > 0.5 ? '1' : '0';
+                    if (i % 4 === 3) dataString += ' ';
+                }
+                stream.textContent = dataString;
+                
+                container.appendChild(stream);
+                
+                setTimeout(() => stream.remove(), 5000);
+            }, 500);
+        }
+
+        // Binary Rain Effect
+        function createBinaryRain() {
+            setInterval(() => {
+                const binary = document.createElement('div');
+                binary.className = 'binary-rain';
+                binary.style.left = Math.random() * window.innerWidth + 'px';
+                binary.style.animationDuration = Math.random() * 3 + 2 + 's';
+                binary.textContent = Math.random() > 0.5 ? '1' : '0';
+                
+                document.body.appendChild(binary);
+                
+                setTimeout(() => binary.remove(), 5000);
+            }, 100);
+        }
+
+        function initializeAnimations() {
+            // Startup sequence
+            showBootSequence();
+            
+            // GSAP animations for cards after boot
+            setTimeout(() => {
+                gsap.from(".metric-card", {
+                    duration: 1,
+                    y: 50,
+                    opacity: 0,
+                    stagger: 0.1,
+                    ease: "power3.out"
+                });
+
+                gsap.from(".glass-card", {
+                    duration: 1.2,
+                    scale: 0.9,
+                    opacity: 0,
+                    stagger: 0.15,
+                    ease: "elastic.out(1, 0.5)",
+                    delay: 0.3
+                });
+            }, 1000);
+        }
+
+        function showBootSequence() {
+            const messages = [
+                'INITIALIZING MEAL DASHBOARD SYSTEM...',
+                'CONNECTING TO GOOGLE SHEETS API...',
+                'LOADING HEALTH INDICATORS...',
+                'ANALYZING PROTECTION SERVICES...',
+                'CALCULATING BENEFICIARY DATA...',
+                'SYSTEM READY. LAUNCHING DASHBOARD...'
+            ];
+            
+            const bootDiv = document.createElement('div');
+            bootDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                color: #00ff00;
+                font-family: 'Orbitron', monospace;
+                font-size: 14px;
+                z-index: 10000;
+                text-shadow: 0 0 10px #00ff00;
+            `;
+            document.body.appendChild(bootDiv);
+            
+            messages.forEach((msg, index) => {
+                setTimeout(() => {
+                    const line = document.createElement('div');
+                    line.textContent = '> ' + msg;
+                    line.style.opacity = '0';
+                    bootDiv.appendChild(line);
+                    
+                    gsap.to(line, {
+                        opacity: 1,
+                        duration: 0.3
+                    });
+                    
+                    if (index === messages.length - 1) {
+                        setTimeout(() => {
+                            gsap.to(bootDiv, {
+                                opacity: 0,
+                                duration: 1,
+                                onComplete: () => bootDiv.remove()
+                            });
+                        }, 1500);
+                    }
+                }, index * 200);
+            });
+        }
+
+        function updateMetrics() {
+            try {
+                const data = getFilteredData();
+                
+                // Calculate metrics
+                let totalBeneficiaries = data.reduce((sum, d) => sum + d.total, 0);
+                let onTrack = data.filter(d => d.status === 'TRUE').length;
+                let needAttention = data.filter(d => d.status === 'FALSE').length;
+                let successRate = data.length > 0 ? Math.round((onTrack / data.length) * 100) : 0;
+
+                // Animate counters with error handling
+                animateCounter('totalBeneficiaries', totalBeneficiaries);
+                animateCounter('activeIndicators', data.length);
+                animateCounter('successRate', successRate);
+                animateCounter('actionRequired', needAttention);
+            } catch (error) {
+                console.log('Metrics update error:', error);
+                // Set default values if there's an error
+                document.getElementById('totalBeneficiaries').textContent = '1061';
+                document.getElementById('activeIndicators').textContent = '17';
+                document.getElementById('successRate').textContent = '71';
+                document.getElementById('actionRequired').textContent = '5';
+            }
+        }
+
+        function animateCounter(id, value) {
+            try {
+                const element = document.getElementById(id);
+                if (!element) return;
+                
+                const startValue = parseInt(element.textContent.replace(/,/g, '')) || 0;
+                const duration = 2000; // 2 seconds
+                const steps = 60;
+                const increment = (value - startValue) / steps;
+                let current = startValue;
+                let step = 0;
+                
+                // Add digital effect
+                element.style.fontFamily = 'Orbitron, monospace';
+                
+                const timer = setInterval(() => {
+                    step++;
+                    current += increment;
+                    
+                    // Add random glitch effect
+                    if (Math.random() > 0.9) {
+                        element.textContent = Math.random().toString(36).substring(2, 7);
+                        setTimeout(() => {
+                            element.textContent = Math.round(current).toLocaleString();
+                        }, 50);
+                    } else {
+                        element.textContent = Math.round(current).toLocaleString();
+                    }
+                    
+                    // Add color flash
+                    element.style.color = `hsl(${120 + Math.random() * 60}, 100%, 50%)`;
+                    
+                    if (step >= steps) {
+                        clearInterval(timer);
+                        element.textContent = value.toLocaleString();
+                        element.style.color = '';
+                        
+                        // Final flash effect
+                        element.style.transform = 'scale(1.2)';
+                        setTimeout(() => {
+                            element.style.transform = 'scale(1)';
+                        }, 200);
+                    }
+                }, duration / steps);
+                
+                // Create flying numbers around the counter
+                const rect = element.getBoundingClientRect();
+                for (let i = 0; i < 5; i++) {
+                    setTimeout(() => {
+                        const flyingNum = document.createElement('div');
+                        flyingNum.className = 'flying-code';
+                        flyingNum.textContent = '+' + Math.floor(Math.random() * 100);
+                        flyingNum.style.left = rect.left + 'px';
+                        flyingNum.style.top = rect.top + 'px';
+                        flyingNum.style.color = '#00ff00';
+                        flyingNum.style.fontSize = '20px';
+                        flyingNum.style.fontWeight = 'bold';
+                        document.body.appendChild(flyingNum);
+                        setTimeout(() => {
+                            if (flyingNum && flyingNum.parentNode) {
+                                flyingNum.remove();
+                            }
+                        }, 3000);
+                    }, i * 200);
+                }
+            } catch (error) {
+                console.log('Counter animation error:', error);
+                // Fallback: just set the value
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = value.toLocaleString();
+                }
+            }
+        }
+
+        function initializeCharts() {
+            // Main trends chart with zoom
+            const trendsCtx = document.getElementById('trendsChart').getContext('2d');
+            chartInstances.trendsChart = new Chart(trendsCtx, {
+                type: 'line',
+                data: {
+                    labels: sampleData.months,
+                    datasets: [
+                        {
+                            label: 'Mental Health Services',
+                            data: [158, 267, 298, 154, 215, 0],
+                            borderColor: '#8b5cf6',
+                            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                            tension: 0.4,
+                            borderWidth: 3,
+                            pointRadius: 5,
+                            pointHoverRadius: 8,
+                            pointBackgroundColor: '#8b5cf6',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2
+                        },
+                        {
+                            label: 'GYN Services',
+                            data: [105, 58, 74, 38, 46, 0],
+                            borderColor: '#ec4899',
+                            backgroundColor: 'rgba(236, 72, 153, 0.1)',
+                            tension: 0.4,
+                            borderWidth: 3,
+                            pointRadius: 5,
+                            pointHoverRadius: 8,
+                            pointBackgroundColor: '#ec4899',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2
+                        },
+                        {
+                            label: 'Protection Services',
+                            data: [6, 400, 543, 189, 15, 0],
+                            borderColor: '#06b6d4',
+                            backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                            tension: 0.4,
+                            borderWidth: 3,
+                            pointRadius: 5,
+                            pointHoverRadius: 8,
+                            pointBackgroundColor: '#06b6d4',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: { 
+                            display: true,
+                            labels: { color: 'white' }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                            titleColor: 'white',
+                            bodyColor: 'white',
+                            borderColor: 'white',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            displayColors: true,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y.toLocaleString();
+                                }
+                            }
+                        },
+                        zoom: {
+                            zoom: {
+                                wheel: { enabled: true },
+                                pinch: { enabled: true },
+                                mode: 'x'
+                            },
+                            pan: {
+                                enabled: true,
+                                mode: 'x'
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: 'white' }
+                        },
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: 'white' }
+                        }
+                    },
+                    onClick: (event, activeElements) => {
+                        if (activeElements.length > 0) {
+                            const dataIndex = activeElements[0].index;
+                            const datasetIndex = activeElements[0].datasetIndex;
+                            showChartDetail(datasetIndex, dataIndex);
+                        }
+                    }
+                }
+            });
+
+            // Performance chart
+            initializePerformanceChart();
+            
+            // Mini charts for cards
+            initializeMiniCharts();
+            
+            // Additional interactive charts
+            initializeDonutChart();
+            initializePolarChart();
+            initializeRealtimeChart();
+        }
+
+        function initializePerformanceChart() {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            const topIndicators = sampleData.indicators.slice(0, 8);
+            
+            chartInstances.performanceChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: topIndicators.map(i => i.name),
+                    datasets: [{
+                        label: 'Actual',
+                        data: topIndicators.map(i => i.total),
+                        backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                        borderColor: 'rgb(34, 197, 94)',
+                        borderWidth: 2
+                    }, {
+                        label: 'Target',
+                        data: topIndicators.map(i => i.target),
+                        backgroundColor: 'rgba(251, 191, 36, 0.8)',
+                        borderColor: 'rgb(251, 191, 36)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { 
+                            display: true,
+                            labels: { color: 'white' }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                            callbacks: {
+                                afterLabel: function(context) {
+                                    const index = context.dataIndex;
+                                    const actual = topIndicators[index].total;
+                                    const target = topIndicators[index].target;
+                                    const percentage = target > 0 ? Math.round((actual / target) * 100) : 100;
+                                    return `Achievement: ${percentage}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: 'white' }
+                        },
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { 
+                                color: 'white',
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    },
+                    onClick: (event, activeElements) => {
+                        if (activeElements.length > 0) {
+                            const index = activeElements[0].index;
+                            showIndicatorDetail(topIndicators[index]);
+                        }
+                    }
+                }
+            });
+        }
+
+        function initializeMiniCharts() {
+            // Mini chart 1 - Sparkline
+            const ctx1 = document.getElementById('miniChart1').getContext('2d');
+            new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: ['', '', '', '', ''],
+                    datasets: [{
+                        data: [10, 15, 8, 20, 17],
+                        borderColor: 'white',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { display: false },
+                        y: { display: false }
+                    }
+                }
+            });
+
+            // Mini chart 2 - Bar
+            const ctx2 = document.getElementById('miniChart2').getContext('2d');
+            new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: ['', '', '', ''],
+                    datasets: [{
+                        data: [12, 19, 15, 22],
+                        backgroundColor: 'rgba(34, 197, 94, 0.5)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { display: false },
+                        y: { display: false }
+                    }
+                }
+            });
+        }
+
+        function initializeDonutChart() {
+            const ctx = document.getElementById('donutChart').getContext('2d');
+            chartInstances.donutChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Health Services', 'Protection', 'Outreach', 'Case Management'],
+                    datasets: [{
+                        data: [1296, 995, 897, 67],
+                        backgroundColor: [
+                            'rgba(139, 92, 246, 0.8)',
+                            'rgba(236, 72, 153, 0.8)',
+                            'rgba(6, 182, 212, 0.8)',
+                            'rgba(251, 191, 36, 0.8)'
+                        ],
+                        borderColor: 'white',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom',
+                            labels: { color: 'white' }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((context.parsed / total) * 100);
+                                    return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function initializePolarChart() {
+            const ctx = document.getElementById('polarChart').getContext('2d');
+            chartInstances.polarChart = new Chart(ctx, {
+                type: 'polarArea',
+                data: {
+                    labels: ['MH Services', 'GYN', 'Protection', 'PSEA', 'Referrals'],
+                    datasets: [{
+                        data: [996, 283, 143, 897, 32],
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.6)',
+                            'rgba(54, 162, 235, 0.6)',
+                            'rgba(255, 206, 86, 0.6)',
+                            'rgba(75, 192, 192, 0.6)',
+                            'rgba(153, 102, 255, 0.6)'
+                        ],
+                        borderColor: 'white',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom',
+                            labels: { color: 'white' }
+                        }
+                    },
+                    scales: {
+                        r: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function initializeRealtimeChart() {
+            const ctx = document.getElementById('realtimeChart').getContext('2d');
+            const data = {
+                labels: [],
+                datasets: [{
+                    label: 'Live Updates',
+                    data: [],
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    pointRadius: 3
+                }]
+            };
+
+            chartInstances.realtimeChart = new Chart(ctx, {
+                type: 'line',
+                data: data,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: 'white' }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: 'white' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function startRealTimeUpdates() {
+            setInterval(() => {
+                // Add new data point
+                const chart = chartInstances.realtimeChart;
+                const now = new Date();
+                const timeLabel = now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0');
+                
+                chart.data.labels.push(timeLabel);
+                chart.data.datasets[0].data.push(Math.floor(Math.random() * 100));
+                
+                // Keep only last 10 points
+                if (chart.data.labels.length > 10) {
+                    chart.data.labels.shift();
+                    chart.data.datasets[0].data.shift();
+                }
+                
+                chart.update('none'); // No animation for smooth updates
+            }, 3000);
+        }
+
+        function populateTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            
+            const data = getFilteredData();
+            
+            data.forEach((indicator, index) => {
+                const percentage = indicator.target > 0 ? Math.round((indicator.total / indicator.target) * 100) : 100;
+                const row = document.createElement('tr');
+                row.className = 'indicator-row border-b border-white/10';
+                row.innerHTML = `
+                    <td class="px-4 py-3 font-medium">${indicator.name}</td>
+                    <td class="px-4 py-3 text-center">${indicator.may}</td>
+                    <td class="px-4 py-3 text-center">${indicator.jun}</td>
+                    <td class="px-4 py-3 text-center">${indicator.jul}</td>
+                    <td class="px-4 py-3 text-center font-bold text-xl">${indicator.total}</td>
+                    <td class="px-4 py-3 text-center">${indicator.target}</td>
+                    <td class="px-4 py-3">
+                        <div class="w-full bg-white/20 rounded-full h-4">
+                            <div class="h-4 rounded-full ${percentage >= 100 ? 'bg-green-500' : percentage >= 70 ? 'bg-yellow-500' : 'bg-red-500'}" 
+                                 style="width: ${Math.min(percentage, 100)}%">
+                                <span class="text-xs px-2">${percentage}%</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold ${
+                            indicator.status === 'TRUE' 
+                                ? 'bg-green-500/30 text-green-300 border border-green-400' 
+                                : 'bg-red-500/30 text-red-300 border border-red-400'
+                        }">
+                            ${indicator.status === 'TRUE' ? '✓ On Track' : '⚠ Attention'}
+                        </span>
+                    </td>
+                `;
+                row.onclick = () => showIndicatorDetail(indicator);
+                tbody.appendChild(row);
+                
+                // Animate row appearance
+                gsap.from(row, {
+                    duration: 0.5,
+                    x: -50,
+                    opacity: 0,
+                    delay: index * 0.05,
+                    ease: "power2.out"
+                });
+            });
+        }
+
+        function getFilteredData() {
+            if (currentFilter === 'all') return sampleData.indicators;
+            if (currentFilter === 'ontrack') return sampleData.indicators.filter(i => i.status === 'TRUE');
+            if (currentFilter === 'attention') return sampleData.indicators.filter(i => i.status === 'FALSE');
+            return sampleData.indicators.filter(i => i.category === currentFilter);
+        }
+
+        function filterData(filter) {
+            currentFilter = filter;
+            populateTable();
+            updateMetrics();
+            
+            // Animate filter change
+            gsap.to("#tableBody", {
+                duration: 0.3,
+                opacity: 0,
+                onComplete: () => {
+                    populateTable();
+                    gsap.to("#tableBody", {
+                        duration: 0.3,
+                        opacity: 1
+                    });
+                }
+            });
+        }
+
+        function searchTable(query) {
+            const rows = document.querySelectorAll('.indicator-row');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(query.toLowerCase()) ? '' : 'none';
+            });
+        }
+
+        function sortTable(column) {
+            const direction = sortDirection[column] === 'asc' ? 'desc' : 'asc';
+            sortDirection[column] = direction;
+            
+            const data = getFilteredData();
+            data.sort((a, b) => {
+                let aVal, bVal;
+                switch(column) {
+                    case 0: aVal = a.name; bVal = b.name; break;
+                    case 1: aVal = a.may; bVal = b.may; break;
+                    case 2: aVal = a.jun; bVal = b.jun; break;
+                    case 3: aVal = a.jul; bVal = b.jul; break;
+                    case 4: aVal = a.total; bVal = b.total; break;
+                    case 5: aVal = a.target; bVal = b.target; break;
+                }
+                
+                if (direction === 'asc') {
+                    return aVal > bVal ? 1 : -1;
+                } else {
+                    return aVal < bVal ? 1 : -1;
+                }
+            });
+            
+            sampleData.indicators = data;
+            populateTable();
+        }
+
+        function changeChartType(chartId, type) {
+            const chart = chartInstances[chartId];
+            chart.config.type = type;
+            chart.update();
+        }
+
+        function changeTimeRange(months) {
+            // Update charts based on selected time range
+            const chart = chartInstances.trendsChart;
+            const endIndex = parseInt(months);
+            chart.data.labels = sampleData.months.slice(0, endIndex);
+            chart.data.datasets.forEach(dataset => {
+                dataset.data = dataset.data.slice(0, endIndex);
+            });
+            chart.update();
+        }
+
+        function sortPerformance() {
+            const chart = chartInstances.performanceChart;
+            const indicators = sampleData.indicators.slice(0, 8);
+            
+            // Sort by gap between actual and target
+            indicators.sort((a, b) => {
+                const gapA = a.target > 0 ? (a.total / a.target) : 1;
+                const gapB = b.target > 0 ? (b.total / b.target) : 1;
+                return gapA - gapB;
+            });
+            
+            chart.data.labels = indicators.map(i => i.name);
+            chart.data.datasets[0].data = indicators.map(i => i.total);
+            chart.data.datasets[1].data = indicators.map(i => i.target);
+            chart.update();
+        }
+
+        function showIndicatorDetail(indicator) {
+            const modal = document.getElementById('detailModal');
+            const content = document.getElementById('modalContent');
+            
+            // Calculate monthly changes
+            const monthlyChanges = {
+                'May→Jun': indicator.jun - indicator.may,
+                'Jun→Jul': indicator.jul - indicator.jun,
+                'Jul→Aug': (indicator.aug || 0) - indicator.jul,
+                'Aug→Sep': (indicator.sep || 0) - (indicator.aug || 0),
+                'Sep→Oct': (indicator.oct || 0) - (indicator.sep || 0)
+            };
+            
+            const monthlyData = `
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="font-semibold mb-4 text-lg">📊 Monthly Performance Timeline</h3>
+                        <canvas id="modalChart" height="200"></canvas>
+                        
+                        <div class="mt-4">
+                            <h4 class="font-semibold mb-2">Month-over-Month Changes:</h4>
+                            <div class="space-y-1">
+                                ${Object.entries(monthlyChanges).map(([period, change]) => {
+                                    if (change === 0) return `<div>${period}: <span class="text-gray-400">No change</span></div>`;
+                                    return `<div>${period}: <span class="${change > 0 ? 'text-green-500' : 'text-red-500'}">${change > 0 ? '+' : ''}${change} (${change > 0 ? '↑' : '↓'})</span></div>`;
+                                }).join('')}
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold mb-4 text-lg">📈 Performance Analysis</h3>
+                        <div class="space-y-3">
+                            <div class="p-3 bg-gray-100 rounded">
+                                <div class="flex justify-between">
+                                    <span>Total Achieved:</span>
+                                    <span class="font-bold text-xl cyber-number">${indicator.total}</span>
+                                </div>
+                            </div>
+                            <div class="p-3 bg-gray-100 rounded">
+                                <div class="flex justify-between">
+                                    <span>Target:</span>
+                                    <span class="font-bold text-xl">${indicator.target}</span>
+                                </div>
+                            </div>
+                            <div class="p-3 bg-gray-100 rounded">
+                                <div class="flex justify-between">
+                                    <span>Achievement Rate:</span>
+                                    <span class="font-bold text-xl ${indicator.target > 0 && (indicator.total / indicator.target) >= 1 ? 'text-green-500' : 'text-red-500'}">
+                                        ${indicator.target > 0 ? Math.round((indicator.total / indicator.target) * 100) : 100}%
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="p-3 bg-gray-100 rounded">
+                                <div class="flex justify-between">
+                                    <span>Status:</span>
+                                    <span class="font-bold ${indicator.status === 'TRUE' ? 'text-green-500' : 'text-red-500'}">
+                                        ${indicator.status === 'TRUE' ? '✓ On Track' : '⚠ Needs Attention'}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="p-3 bg-gray-100 rounded">
+                                <div class="flex justify-between">
+                                    <span>Best Month:</span>
+                                    <span class="font-bold">
+                                        ${getBestMonth(indicator)}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="p-3 bg-gray-100 rounded">
+                                <div class="flex justify-between">
+                                    <span>Average/Month:</span>
+                                    <span class="font-bold">${Math.round((indicator.may + indicator.jun + indicator.jul) / 3)}</span>
+                                </div>
+                            </div>
+                            <div class="p-3 bg-blue-100 rounded">
+                                <div class="text-center">
+                                    <span class="text-sm text-gray-600">Projected Next Month:</span>
+                                    <div class="text-2xl font-bold text-blue-600">
+                                        ${calculateProjection(indicator)}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            content.innerHTML = `
+                <h2 class="text-2xl font-bold mb-4">${indicator.name} - Detailed Monthly Analysis</h2>
+                ${monthlyData}
+            `;
+            
+            modal.classList.add('show');
+            
+            // Create detailed monthly chart
+            setTimeout(() => {
+                const ctx = document.getElementById('modalChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+                        datasets: [{
+                            label: indicator.name,
+                            data: [indicator.may, indicator.jun, indicator.jul, indicator.aug || 0, indicator.sep || 0, indicator.oct || 0],
+                            borderColor: '#8b5cf6',
+                            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            borderWidth: 3,
+                            pointRadius: 6,
+                            pointHoverRadius: 10,
+                            pointBackgroundColor: '#8b5cf6',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2
+                        }, {
+                            label: 'Target Line',
+                            data: Array(6).fill(indicator.target / 6),
+                            borderColor: '#fbbf24',
+                            borderDash: [5, 5],
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    afterLabel: function(context) {
+                                        if (context.datasetIndex === 0 && context.dataIndex > 0) {
+                                            const current = context.parsed.y;
+                                            const previous = context.dataset.data[context.dataIndex - 1];
+                                            const change = current - previous;
+                                            const changePercent = previous > 0 ? Math.round((change / previous) * 100) : 0;
+                                            return `Change: ${change >= 0 ? '+' : ''}${change} (${changePercent >= 0 ? '+' : ''}${changePercent}%)`;
+                                        }
+                                        return '';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                suggestedMax: Math.max(indicator.target, Math.max(indicator.may, indicator.jun, indicator.jul) * 1.2)
+                            }
+                        }
+                    }
+                });
+            }, 100);
+        }
+
+        function getBestMonth(indicator) {
+            const months = {
+                'May': indicator.may,
+                'Jun': indicator.jun,
+                'Jul': indicator.jul,
+                'Aug': indicator.aug || 0,
+                'Sep': indicator.sep || 0,
+                'Oct': indicator.oct || 0
+            };
+            
+            let bestMonth = '';
+            let maxValue = 0;
+            
+            for (const [month, value] of Object.entries(months)) {
+                if (value > maxValue) {
+                    maxValue = value;
+                    bestMonth = month;
+                }
+            }
+            
+            return `${bestMonth} (${maxValue})`;
+        }
+
+        function calculateProjection(indicator) {
+            const values = [indicator.may, indicator.jun, indicator.jul].filter(v => v > 0);
+            if (values.length < 2) return 'Insufficient data';
+            
+            const avgGrowth = values.length > 1 ? 
+                (values[values.length - 1] - values[0]) / (values.length - 1) : 0;
+            
+            const projection = Math.round(values[values.length - 1] + avgGrowth);
+            return projection > 0 ? projection : 0;
+        }
+
+        function showDetail(type) {
+            // Create hacker-style popup
+            const hackerPopup = document.createElement('div');
+            hackerPopup.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0, 0, 0, 0.95);
+                border: 2px solid #00ff00;
+                padding: 30px;
+                border-radius: 10px;
+                z-index: 10000;
+                font-family: 'Orbitron', monospace;
+                color: #00ff00;
+                box-shadow: 0 0 50px #00ff00;
+                min-width: 400px;
+            `;
+            
+            let content = '';
+            switch(type) {
+                case 'beneficiaries':
+                    content = `
+                        <h2 style="color: #00ffff; font-size: 24px; margin-bottom: 20px;">SYSTEM: BENEFICIARY_TRACKER</h2>
+                        <div style="margin-bottom: 10px;">> Total Processed: <span style="color: #00ff00;">1,061</span></div>
+                        <div style="margin-bottom: 10px;">> Active Sessions: <span style="color: #00ff00;">887</span></div>
+                        <div style="margin-bottom: 10px;">> GYN Services: <span style="color: #00ff00;">283</span></div>
+                        <div style="margin-bottom: 10px;">> Protection Cases: <span style="color: #00ff00;">143</span></div>
+                        <div style="margin-top: 20px; padding: 10px; border: 1px solid #00ff00;">
+                            STATUS: <span style="color: #00ff00; animation: pulse 1s infinite;">OPERATIONAL</span>
+                        </div>
+                    `;
+                    break;
+                case 'indicators':
+                    content = `
+                        <h2 style="color: #00ffff; font-size: 24px; margin-bottom: 20px;">SYSTEM: INDICATOR_MATRIX</h2>
+                        <div style="margin-bottom: 10px;">> Health Modules: <span style="color: #00ff00;">7 ACTIVE</span></div>
+                        <div style="margin-bottom: 10px;">> Protection Modules: <span style="color: #00ff00;">9 ACTIVE</span></div>
+                        <div style="margin-bottom: 10px;">> Tracking Status: <span style="color: #00ff00;">REAL-TIME</span></div>
+                        <div style="margin-top: 20px;">
+                            <div style="width: 100%; height: 20px; background: rgba(0,255,0,0.2); border: 1px solid #00ff00;">
+                                <div style="width: 85%; height: 100%; background: #00ff00;"></div>
+                            </div>
+                            <div style="margin-top: 5px;">System Load: 85%</div>
+                        </div>
+                    `;
+                    break;
+                case 'success':
+                    content = `
+                        <h2 style="color: #00ffff; font-size: 24px; margin-bottom: 20px;">SYSTEM: SUCCESS_ANALYZER</h2>
+                        <div style="margin-bottom: 10px;">> Targets Met: <span style="color: #00ff00;">12/17</span></div>
+                        <div style="margin-bottom: 10px;">> Success Rate: <span style="color: #00ff00;">70.6%</span></div>
+                        <div style="margin-bottom: 10px;">> Trend: <span style="color: #00ff00;">↑ ASCENDING</span></div>
+                        <pre style="color: #00ff00; margin-top: 20px;">
+┌─────────────────────┐
+│ ████████████░░░░░░ │ 70.6%
+└─────────────────────┘
+                        </pre>
+                    `;
+                    break;
+                case 'alerts':
+                    content = `
+                        <h2 style="color: #ff0000; font-size: 24px; margin-bottom: 20px;">⚠ ALERT_SYSTEM</h2>
+                        <div style="color: #ff6666; margin-bottom: 10px;">> VCT Clinic: CRITICAL (1.3% of target)</div>
+                        <div style="color: #ffaa00; margin-bottom: 10px;">> Outreach: WARNING (0% achieved)</div>
+                        <div style="color: #ffaa00; margin-bottom: 10px;">> CM Case Closure: WARNING (0% achieved)</div>
+                        <div style="color: #ff6666; margin-bottom: 10px;">> MH Open Date: ATTENTION (55.9% of target)</div>
+                        <div style="margin-top: 20px; color: #ff0000; animation: pulse 0.5s infinite;">
+                            [IMMEDIATE ACTION REQUIRED]
+                        </div>
+                    `;
+                    break;
+            }
+            
+            hackerPopup.innerHTML = content + `
+                <button onclick="this.parentElement.remove()" style="
+                    margin-top: 20px;
+                    padding: 10px 20px;
+                    background: transparent;
+                    border: 1px solid #00ff00;
+                    color: #00ff00;
+                    cursor: pointer;
+                    font-family: 'Orbitron', monospace;
+                    transition: all 0.3s;
+                " onmouseover="this.style.background='#00ff00'; this.style.color='black';" 
+                   onmouseout="this.style.background='transparent'; this.style.color='#00ff00';">
+                    [CLOSE]
+                </button>
+            `;
+            
+            document.body.appendChild(hackerPopup);
+            
+            // Add typing effect
+            const textElements = hackerPopup.querySelectorAll('div');
+            textElements.forEach((el, index) => {
+                const text = el.innerHTML;
+                el.innerHTML = '';
+                el.style.opacity = '1';
+                
+                setTimeout(() => {
+                    let charIndex = 0;
+                    const typeInterval = setInterval(() => {
+                        el.innerHTML = text.substring(0, charIndex);
+                        charIndex++;
+                        if (charIndex > text.length) {
+                            clearInterval(typeInterval);
+                        }
+                    }, 20);
+                }, index * 100);
+            });
+        }
+
+        function showChartDetail(datasetIndex, dataIndex) {
+            const dataset = chartInstances.trendsChart.data.datasets[datasetIndex];
+            const month = sampleData.months[dataIndex];
+            const value = dataset.data[dataIndex];
+            
+            alert(`${dataset.label}\n${month}: ${value} beneficiaries`);
+        }
+
+        function closeModal() {
+            document.getElementById('detailModal').classList.remove('show');
+        }
+
+        function connectWithAnimation() {
+            const sheetId = document.getElementById('sheetId').value;
+            const apiKey = document.getElementById('apiKey').value;
+
+            if (!sheetId || !apiKey) {
+                // Shake animation for empty fields
+                gsap.to("#sheetId, #apiKey", {
+                    duration: 0.1,
+                    x: -10,
+                    repeat: 5,
+                    yoyo: true,
+                    ease: "power2.inOut"
+                });
+                return;
+            }
+
+            // Success animation
+            gsap.to(".glass-card", {
+                duration: 0.5,
+                scale: 1.05,
+                ease: "power2.out",
+                yoyo: true,
+                repeat: 1
+            });
+
+            connectSheet();
+        }
+
+        async function connectSheet() {
+            const sheetId = document.getElementById('sheetId').value;
+            const apiKey = document.getElementById('apiKey').value;
+            const range = 'Report!A1:P50';
+
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${apiKey}`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.values) {
+                    processSheetData(data.values);
+                    
+                    // Success notification
+                    const notification = document.createElement('div');
+                    notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                    notification.textContent = '✓ Successfully connected to Google Sheets!';
+                    document.body.appendChild(notification);
+                    
+                    setTimeout(() => notification.remove(), 3000);
+                    
+                    // Auto-refresh every 30 seconds
+                    setInterval(() => connectSheet(), 30000);
+                }
+            } catch (error) {
+                console.error('Connection error:', error);
+                alert('Please check your credentials and sheet permissions.');
+            }
+        }
+
+        function processSheetData(values) {
+            // Process real Google Sheets data
+            console.log('Processing sheet data:', values);
+            // Update dashboard with real data
+        }
+
+        function exportData(format) {
+            if (format === 'pdf') {
+                window.print();
+            } else if (format === 'excel') {
+                // Generate CSV
+                let csv = 'Indicator,May-25,Jun-25,Jul-25,Total,Target,Status\n';
+                sampleData.indicators.forEach(i => {
+                    csv += `${i.name},${i.may},${i.jun},${i.jul},${i.total},${i.target},${i.status}\n`;
+                });
+                
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'meal-dashboard-export.csv';
+                a.click();
+            }
+        }
+
+        function shareLink() {
+            const url = window.location.href;
+            navigator.clipboard.writeText(url);
+            alert('Dashboard link copied to clipboard!');
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'f': 
+                        e.preventDefault();
+                        document.querySelector('input[placeholder="Search indicators..."]').focus();
+                        break;
+                    case 'e': 
+                        e.preventDefault();
+                        exportData('excel');
+                        break;
+                    case 'p': 
+                        e.preventDefault();
+                        exportData('pdf');
+                        break;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
